@@ -207,7 +207,7 @@ if($action == 'edit' || $preview) {
 	$CON_FORM_BEGIN = "<form action=\"$self\" method=\"post\"><input type=\"hidden\" name=\"action\" value=\"save\"/><input type=\"hidden\" name=\"last_changed\" value=\"$last_changed_ts\"/><input type=\"hidden\" name=\"showsource\" value=\"$showsource\"/><input type=\"hidden\" name=\"par\" value=\"".h($par)."\"/><input type=\"hidden\" name=\"page\" value=\"".h($page)."\"/>";
 	$CON_FORM_END = '</form>';
 	$CON_TEXTAREA = '<textarea class="contentTextarea" name="content" style="width:100%" cols="100" rows="30" autofocus>'.h(str_replace("&lt;", "<", $CON)).'</textarea>';
-	$CON_PREVIEW = '<input class="submit" type="submit" name="preview" accesskey="s" value="'.$T_PREVIEW.'"/>';
+	$CON_PREVIEW = '<input class="submit" type="submit" name="preview" accesskey="p" value="'.$T_PREVIEW.'"/>';
 
 	if(!$showsource) {
 		$CON_SUBMIT = '<input class="submit" accesskey="s" type="submit" value="'.$T_DONE.'"/>';
@@ -233,7 +233,7 @@ if($action == 'edit' || $preview) {
 			$files[] = $f;
 
 	rsort($files);
-	$CON = '<form action="'.$self.'" method="get"><input type="hidden" name="action" value="diff"/><input type="hidden" name="page" value="'.h($page).'"/><input type="submit" accesskey="s" class="submit" value="'.$T_DIFF.'"/><br/>';
+	$CON = '<form action="'.$self.'" method="get"><input type="hidden" name="action" value="diff"/><input type="hidden" name="page" value="'.h($page).'"/><input type="submit" class="submit" value="'.$T_DIFF.'"/><br/>';
 	$meta = @fopen("$HIST_DIR$page/meta.dat", "rb");
 
 	for($i = 0, $mi = 1, $c = count($files); $i < $c; $i++) {
