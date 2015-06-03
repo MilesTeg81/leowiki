@@ -1,4 +1,4 @@
-<?php // LionWiki 3.2.9, (c) Adam Zivner, licensed under GNU/GPL v2
+<?php // Leowiki 0.1, licensed under GNU/GPL v2, see history file for details
 foreach($_REQUEST as $k => $v)
 	unset($$k); // register_globals = off
 
