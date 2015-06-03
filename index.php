@@ -641,11 +641,11 @@ function fallback_template() { return '<!doctype html>
 		<!-- CSS based on template of Dandelion wiki engine by Radomir Dopieralski who released this
 	template under the terms of GNU GPL. http://dandelion.sheep.art.pl/ -->
 <style type="text/css">
-html{font:96% sans-serif;background:#f7f7f7;line-height:1.4}
+html{font:96% sans-serif;background:#f7f7f7;line-height:1.2}
 body{color:#333}
 #wrapper{margin:auto;width:60em;position:relative}
 #header{padding:0px 0px 7px 0px}
-#content{background:white;padding:1em;border:1px solid #e0d78a;outline:0.5em solid #fef4a4;margin:0.5em 0;padding:20px;min-height:20em}
+#content{background:white;padding:2px;border:1px solid #e0d78a;outline:0.5em solid #fef4a4;margin:0.2em 0;padding:10px;min-height:10em}
 #content *{outline: 0}
 h1{margin-top:0px;}
 h1,h2,h3,h4,h5,h6{letter-spacing:0.05em;color:#1474CA;font-weight:normal}
@@ -692,7 +692,6 @@ a.toolbarTextareaItem{padding-right: 10px}
 <body>
 <div id="wrapper">
 	<div id="header">
-		<div align="right">{HOME} {&nbsp;&nbsp; RECENT_CHANGES}</div>
 	</div>
 	<div id="content">
 		<h1 id="page-title">{PAGE_TITLE} {<span class="pageVersionsList">( plugin:VERSIONS_LIST )</span>}</h1>
@@ -721,7 +720,9 @@ a.toolbarTextareaItem{padding-right: 10px}
 		<div style="float:left;">
 		{SEARCH_FORM}{SEARCH_INPUT}{SEARCH_SUBMIT}{/SEARCH_FORM} 
 		</div>
+		<div align="right">{HOME} {&nbsp;&nbsp; RECENT_CHANGES}</div>
 		<div style="float:right;padding:7px;">{EDIT} {&nbsp;&nbsp; HISTORY}</div>
+		
 	</div>
 </div>
 </body>
