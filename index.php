@@ -206,7 +206,7 @@ if($action == 'save' && !$preview && authentified()) { // do we have page to sav
 if($action == 'edit' || $preview) {
 	$CON_FORM_BEGIN = "<form action=\"$self\" method=\"post\"><input type=\"hidden\" name=\"action\" value=\"save\"/><input type=\"hidden\" name=\"last_changed\" value=\"$last_changed_ts\"/><input type=\"hidden\" name=\"showsource\" value=\"$showsource\"/><input type=\"hidden\" name=\"par\" value=\"".h($par)."\"/><input type=\"hidden\" name=\"page\" value=\"".h($page)."\"/>";
 	$CON_FORM_END = '</form>';
-	$CON_TEXTAREA = '<textarea class="contentTextarea" name="content" style="width:100%" cols="100" rows="30">'.h(str_replace("&lt;", "<", $CON)).'</textarea>';
+	$CON_TEXTAREA = '<textarea class="contentTextarea" name="content" style="width:100%" cols="100" rows="30" autofocus>'.h(str_replace("&lt;", "<", $CON)).'</textarea>';
 	$CON_PREVIEW = '<input class="submit" type="submit" name="preview" value="'.$T_PREVIEW.'"/>';
 
 	if(!$showsource) {
@@ -630,12 +630,12 @@ function plugin($method) {
 	return $ret; // returns true if treated by a plugin
 }
 
-function fallback_template() { return '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+function fallback_template() { return '<!doctype html>
+<html>
 <head>
 	<!-- CSS based on template of Dandelion wiki engine by Radomir Dopieralski who released this
 	template under the terms of GNU GPL. http://dandelion.sheep.art.pl/ -->
-	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta  charset="utf-8" />
 	<title>{PAGE_TITLE_HEAD  - }{WIKI_TITLE}</title>
 	
 		<!-- CSS based on template of Dandelion wiki engine by Radomir Dopieralski who released this
@@ -719,7 +719,7 @@ a.toolbarTextareaItem{padding-right: 10px}
 	</div>
 	<div id="footer">
 		<div style="float:left;">
-		{SEARCH_FORM}{SEARCH_INPUT}{SEARCH_SUBMIT}{/SEARCH_FORM} Powered by <a href="http://lionwiki.0o.cz/">LionWiki</a>
+		{SEARCH_FORM}{SEARCH_INPUT}{SEARCH_SUBMIT}{/SEARCH_FORM} 
 		</div>
 		<div style="float:right;padding:7px;">{EDIT} {&nbsp;&nbsp; HISTORY}</div>
 	</div>
