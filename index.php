@@ -637,7 +637,10 @@ function fallback_template() { return '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 
 	template under the terms of GNU GPL. http://dandelion.sheep.art.pl/ -->
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 	<title>{PAGE_TITLE_HEAD  - }{WIKI_TITLE}</title>
-		<!-- CSS <style type="text/css">
+	
+		<!-- CSS based on template of Dandelion wiki engine by Radomir Dopieralski who released this
+	template under the terms of GNU GPL. http://dandelion.sheep.art.pl/ -->
+<style type="text/css">
 html{font:96% sans-serif;background:#f7f7f7;line-height:1.4}
 body{color:#333}
 #wrapper{margin:auto;width:60em;position:relative}
@@ -683,7 +686,7 @@ form{display:inline}
 a.toolbarTextareaItem{padding-right: 10px}
 .wikitable{border-collapse:collapse}
 .wikitable td{border: 1px solid #DDDDDD;padding:1px 5px 1px 5px}
-	</style>-->
+	</style>
   {HEAD}
 </head>
 <body>
