@@ -37,8 +37,8 @@ $LANG_DIR = 'lang/';
 // default translation
 $T_HOME = 'Main page';
 $T_SYNTAX = 'Syntax';
-$T_DONE = 'Save changes';
-$T_DISCARD_CHANGES = 'Discard changes';
+$T_DONE = 'Save';
+$T_DISCARD_CHANGES = 'Discard';
 $T_PREVIEW = 'Preview';
 $T_SEARCH = 'Search';
 $T_SEARCH_RESULTS = 'Search results';
@@ -56,7 +56,7 @@ $T_EDIT_CONFLICT = 'Edit conflict: somebody saved this page after you started ed
 $T_SHOW_SOURCE = 'Show source';
 $T_SHOW_PAGE = 'Show page';
 $T_ERASE_COOKIE = 'Erase cookies';
-$T_MOVE_TEXT = 'New name';
+$T_MOVE_TEXT = 'Page Name';
 $T_DIFF = 'diff';
 $T_CREATE_PAGE = 'Create page';
 $T_PROTECTED_READ = 'You need to enter password to view content of site: ';
@@ -657,7 +657,7 @@ a.pending{color:#c174a0}
 a:hover{text-decoration:underline}
 a img{border:none}
 a.external:after{content: "\2197";}
-input,textarea{font-size:94%;border:1px solid #999;background:#fff;color:#666;outline:0.2em solid #eee;padding:0px;line-height:1.2;margin:0.5em;vertical-align:middle}
+input,textarea{font-size:94%;border:1px solid #999;background:#fff;color:#666;outline:0.2em solid #eee;padding:3px;line-height:0.8;margin:0.5em;vertical-align:middle}
 textarea{display:block;margin:0.5em auto;width:100%}
 pre{padding:0.5em;margin:0.5em;border:1px solid #e0d78a;background:#fef4a4;color:#644e22;overflow:auto;outline:0.4em solid #eee !important;}
 img{border:1px solid #ccc;outline:0.25em solid #eee;padding:0.25em;margin:0.25em 0 0.25em 0.5em;background:#fff}
