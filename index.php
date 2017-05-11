@@ -1,12 +1,21 @@
 <?php // LionWiki 3.2.10, (c) Adam Zivner, licensed under GNU/GPL v2
+// forked by MilesTeg81
+/* CHANGES:
+MT01 + MT05 PLUGINS DISABLED
+MT02 CONFIG FILE deactivated
+MT03 "INSTALLED" file set instead of always initialising basic setup
+MT04 languages disabled
+standard fallback template replaced by dandelion 
+*/
 foreach($_REQUEST as $k => $v)
 	unset($$k); // register_globals = off
 
-// SETTINGS - default settings, can be overridden in config.php
+// =======================
+// SETTINGS / CONFIG - default settings, can be overridden in config.php
 $WIKI_TITLE = 'My new wiki'; // name of the site
 $PASSWORD = ''; // SHA1 hash
 
-$TEMPLATE = 'templates/dandelion.html'; // presentation template
+$TEMPLATE = 'templates/dandelion.html'; // presentation template (optional)
 $PROTECTED_READ = false; // if true, you need to fill password for reading pages too
 $NO_HTML = true; // XSS protection
 
@@ -18,6 +27,8 @@ $LOCAL_HOUR = 0;
 
 @error_reporting(E_ERROR | E_WARNING | E_PARSE);
 @ini_set('default_charset', 'UTF-8');
+//  SETTINGS / CONFIG End
+// =======================
 
 umask(0);
 
@@ -62,6 +73,8 @@ $T_CREATE_PAGE = 'Create page';
 $T_PROTECTED_READ = 'You need to enter password to view content of site: ';
 $T_WRONG_PASSWORD = 'Password is incorrect.';
 
+//MT04
+/* language support deactivated -mt
 if($_GET['lang']) {
 	$LANG = clear_path($_GET['lang']);
 	setcookie('LW_LANG', $LANG, time() + 365 * 86400);
@@ -72,15 +85,27 @@ else
 
 if((@include("$LANG_DIR$LANG.php")) === false && (@include($LANG_DIR . substr($LANG, 0, 2) . '.php')) === false)
 	$LANG = 'en';
+*/
 
-@include('config.php'); // config file is not required, see settings above
+$LANG = 'en';
+// MT02
+// CONFIG FILE deactivated (we'll just use index.php)
+// @include('config.php'); // config file is not required, see settings above
 
+// MT03
 // Creating essential directories if they don't exist
-if(!file_exists($VAR_DIR) && !mkdir(rtrim($VAR_DIR, "/")))
-	die("Can't create directory $VAR_DIR. Please create $VAR_DIR with 0777 rights.");
-else foreach(array($PG_DIR, $HIST_DIR, $PLUGINS_DATA_DIR) as $DIR)
-	if(@mkdir(rtrim($DIR, '/'), 0777)) {
-		$f = fopen($DIR . ".htaccess", "w"); fwrite($f, "deny from all"); fclose($f); }
+// this is very basic setup and only needed once!
+// we use a simple "installed" file to check if this needs to be run again. -mt
+if(!file_exists('installed')) {
+	if(!file_exists($VAR_DIR) && !mkdir(rtrim($VAR_DIR, "/")))
+		die("Can't create directory $VAR_DIR. Please create $VAR_DIR with 0777 rights.");
+	else foreach(array($PG_DIR, $HIST_DIR, $PLUGINS_DATA_DIR) as $DIR) {
+		if(@mkdir(rtrim($DIR, '/'), 0777)) {
+			$f = fopen($DIR . ".htaccess", "w"); fwrite($f, "deny from all"); fclose($f); }
+		$installed = fopen("installed", 'w') or die("can't open file"); 
+		fclose($installed); }
+}
+
 
 if($_GET['erasecookie']) // remove cookie without reloading
 	foreach($_COOKIE as $k => $v)
@@ -88,7 +113,7 @@ if($_GET['erasecookie']) // remove cookie without reloading
 			setcookie($k);
 			unset($_COOKIE[$k]);
 		}
-
+/* MT01 PLUGINS DISABLED
 for($plugins = array(), $dir = @opendir($PLUGINS_DIR); $dir && $f = readdir($dir);) // load plugins
 	if(preg_match('/wkp_(.+)\.php$/', $f, $m) > 0) {
 		require $PLUGINS_DIR . $f;
@@ -98,7 +123,7 @@ for($plugins = array(), $dir = @opendir($PLUGINS_DIR); $dir && $f = readdir($dir
 			foreach($$m[1] as $name => $value)
 				$plugins[$m[1]]->$name = $value;
 	}
-
+*/
 plugin('pluginsLoaded');
 
 foreach(array('action', 'content', 'error', 'esum', 'f1', 'f2', 'last_changed', 'moveto', 'page', 'par', 'preview', 'query', 'restore', 'sc', 'showsource') as $req)
@@ -126,7 +151,6 @@ if($PROTECTED_READ && !authentified()) { // does user need password to read cont
 	$action = 'view-html';
 } else if($restore || $action == 'rev') { // Show old revision
 	$CON = @file_get_contents("$HIST_DIR$page/$f1");
-
 	if($action == 'rev') {
 		$rev_restore = "[$T_RESTORE|./$self?page=".u($page)."&amp;action=edit&amp;f1=$f1&amp;restore=1]";
 		$CON = strtr($T_REVISION, array('{TIME}' => rev_time($f1), '{RESTORE}' => $rev_restore)) . $CON;
@@ -203,7 +227,8 @@ if($action == 'save' && !$preview && authentified()) { // do we have page to sav
 	$action = 'edit';
 }
 
-if($action == 'edit' || $preview) {
+
+if($action == 'edit' || $preview) { // Page editing
 	$CON_FORM_BEGIN = "<form action=\"$self\" method=\"post\"><input type=\"hidden\" name=\"action\" value=\"save\"/><input type=\"hidden\" name=\"last_changed\" value=\"$last_changed_ts\"/><input type=\"hidden\" name=\"showsource\" value=\"$showsource\"/><input type=\"hidden\" name=\"par\" value=\"".h($par)."\"/><input type=\"hidden\" name=\"page\" value=\"".h($page)."\"/>";
 	$CON_FORM_END = '</form>';
 	$CON_TEXTAREA = '<textarea class="contentTextarea" name="content" style="width:100%" cols="100" rows="30">'.h(str_replace("&lt;", "<", $CON)).'</textarea>';
@@ -299,6 +324,7 @@ if($action == 'edit' || $preview) {
 } else
 	plugin('action', $action);
 
+	
 if(!$action || $preview) { // page parsing
 	if(preg_match("/(?<!\^)\{title:([^}\n]*)\}/U", $CON, $m)) { // Change page title
 		$TITLE = $m[1];
@@ -622,74 +648,103 @@ function meta_getline($file, $lnum) {
 // Call a method for all plugins, second to last arguments are forwarded to plugins as arguments
 function plugin($method) {
 	$ret = false;
+	/* MT05 plugins disabled
 	$args = array_slice(func_get_args(), 1);
 
 	foreach($GLOBALS['plugins'] as $idx => $plugin)
 		$ret |= method_exists($GLOBALS['plugins'][$idx], $method) && call_user_func_array(array(&$GLOBALS['plugins'][$idx], $method), $args);
-
+*/
 	return $ret; // returns true if treated by a plugin
 }
 
 function fallback_template() { return '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-	<meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+	<!-- CSS based on template of Dandelion wiki engine by Radomir Dopieralski who released this
+	template under the terms of GNU GPL. http://dandelion.sheep.art.pl/ -->
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 	<title>{PAGE_TITLE_HEAD  - }{WIKI_TITLE}</title>
 	<style type="text/css">
-*{margin:0;padding:0}
-body{font-size:12px;line-height:16px;padding:10px 20px 20px 20px}
-p{margin:5px}
-a{color:#060;text-decoration:none;border-bottom:1px dotted #060}
-a.pending{color:#900}
-a.external:after{content:"\2197"}
-pre{border:1px dotted #ccc;padding:4px;overflow:auto;margin:3px}
-img,a img{border:0}
-h1,h2,h3,h4,h5,h6{letter-spacing:2px;font-weight:normal;margin:15px 0 15px 0;color:#060}
-h1 a:hover,h2 a:hover,h3 a:hover,h4 a:hover,h5 a:hover,h6 a:hover{color:#060}
-h1 a{border-bottom:0}
-h2 .par-edit,h3 .par-edit,h4 .par-edit,h5 .par-edit,h6 .par-edit{visibility:hidden;font-size:x-small}
-h2:hover .par-edit,h3:hover .par-edit,h4:hover .par-edit,h5:hover .par-edit,h6:hover .par-edit{visibility:visible}
-hr{margin:10px 0 10px 0;height:1px;overflow:hidden;border:0;background:#060}
-ul,ol{padding:5px 0px 5px 20px}
-table{text-align:left}
-input,select,textarea{border:1px solid #AAA;padding:2px;font-size:12px}
-#toc{border:1px dashed #060;margin:5px 0 5px 10px;padding:6px 5px 7px 0;float:right;padding-right:2em;list-style:none}
+html{font:200% sans-serif;background:#f7f7f7;line-height:1.4}
+body{color:#333}
+#wrapper{margin:auto;width:100%;position:relative}
+#header{padding:0px 0px 7px 0px}
+#content{background:white;padding:1em;border:1px solid #e0d78a;outline:0.5em solid #fef4a4;margin:0.5em 0;padding:20px;min-height:20em}
+#content *{outline: 0}
+h1{margin-top:0px;}
+h1,h2,h3,h4,h5,h6{letter-spacing:0.05em;color:#1474CA;font-weight:normal}
+h2 span.par-edit,h3 span.par-edit,h4 span.par-edit,h5 span.par-edit,h6 span.par-edit{display:none}
+h2:hover span.par-edit,h3:hover span.par-edit,h4:hover span.par-edit,h5:hover span.par-edit,h6:hover span.par-edit{display:inline;font-size:x-small}
+a{color:#1474CA;text-decoration:none}
+a:visited{color:#1474CA}
+a.pending{color:#c174a0}
+a:hover{text-decoration:underline}
+a img{border:none}
+a.external:after{content: "\2197";}
+input,textarea{font-size:94%;border:1px solid #999;background:#fff;color:#666;outline:0.2em solid #eee;padding:0px;line-height:1.2;margin:0.5em;vertical-align:middle}
+textarea{display:block;margin:0.5em auto;width:100%}
+pre{padding:0.5em;margin:0.5em;border:1px solid #e0d78a;background:#fef4a4;color:#644e22;overflow:auto;outline:0.4em solid #eee !important;}
+img{border:1px solid #ccc;outline:0.25em solid #eee;padding:0.25em;margin:0.25em 0 0.25em 0.5em;background:#fff}
+hr{height:0;border:none;color:#fff;background:transparent;border-bottom:1px solid #ccc; margin:0.5em 0}
+#diff{outline:none;border:none;background:#fff;line-height:1.25;padding:1em;white-space:pre-wrap;word-wrap:break-word;white-space:-moz-pre-wrap;white-space:-pre-wrap;white-space:-o-pre-wrap;width:97%}
+#diff ins{color:green;text-decoration:none;font-weight:bold}
+#diff del{color:red;text-decoration:line-through}
+hr{margin:10px 0 10px 0;height:0px;overflow:hidden;border:0px;border-top:2px solid #1474CA}
+.error{color:#F25A5A;font-weight:bold}
+form{display:inline}
+#contentTextarea{height:44em}
+#toc{margin:5px 0 5px 10px;padding:6px 5px 7px 0px;float:right;list-style:none;outline:0.4em solid #eee;background:#fef4a4;border:1px solid #e0d78a}
 #toc ul{list-style:none;padding:3px 0 3px 10px}
 #toc li{font-size:11px;padding-left:10px}
-#diff{padding:1em;white-space:pre-wrap;width:97%}
-#diff ins{color:green;font-weight:bold}
-#diff del{color:red;text-decoration:line-through}
-#diff .orig{color:#666;font-size:90%}
-/* Plugins */
-.tagList{padding:0.2em 0.4em 0.2em 0.4em;margin-top:0.5em;border:1px dashed #060;clear:right}
-.tagCloud{float:right;width:200px;padding:0.5em;margin:1em;border:1px dashed #060;clear:right}
-.pageVersionsList{letter-spacing:0;font-variant:normal;font-size:12px}
-.resizeTextarea a{border-bottom:none}
+.rc-diff, .rc-date, .rc-ip, .rc-size {font-size: smaller}
+/* Following are plugin specific styles */
+.pageVersionsList{letter-spacing:0px;font-variant:normal;font-size:12px}
+#renameForm{float:left}
+.clear{clear:both}
+.tagList{padding:0.2em 0.4em 0.2em 0.4em;margin-top:0.5em;border:1px dashed #e0d78a;background:#fef4a4;color:#644e22}
+.tagCloud{padding:0.4em 0.6em 0.4em 0.6em;float:right;width:200px;margin:1em;border:1px dashed #e0d78a;background:#fef4a4;color:#644e22}
+#fileTable{border-collapse:collapse}
+#fileTable td{border:1px solid #FEF4A4;padding:2px 6px 2px 6px}
+.comment-item{border:1px solid #999;color:#666;outline:0.2em solid #eee}
+.resizeTextareaDiv{margin-top: 5px}
+a.toolbarTextareaItem{padding-right: 10px}
+.wikitable{border-collapse:collapse}
+.wikitable td{border: 1px solid #DDDDDD;padding:1px 5px 1px 5px}
 	</style>
-	{HEAD}
+  {HEAD}
 </head>
 <body>
-<table width="100%" cellpadding="4">
-<tr>
-	<td colspan="2">{HOME} {RECENT_CHANGES}</td>
-	<td style="text-align:right">{EDIT} {SYNTAX} {HISTORY}</td>
-</tr>
-<tr><th colspan="3"><hr/><h1 id="page-title">{PAGE_TITLE} {<span class="pageVersionsList">( plugin:VERSIONS_LIST )</span>}</h1></th></tr>
-<tr>
-	<td colspan="3">
-		{<div style="color:#F25A5A;font-weight:bold;"> ERROR </div>}
-		{CONTENT} {plugin:TAG_LIST}
-		{CONTENT_FORM} {RENAME_TEXT} {RENAME_INPUT <br/><br/>} {CONTENT_TEXTAREA}
-		<p style="float:right;margin:6px">{FORM_PASSWORD} {FORM_PASSWORD_INPUT} {plugin:CAPTCHA_QUESTION} {plugin:CAPTCHA_INPUT}
-		{EDIT_SUMMARY_TEXT} {EDIT_SUMMARY_INPUT} {CONTENT_SUBMIT} {CONTENT_PREVIEW}</p>{/CONTENT_FORM}
-	</td>
-</tr>
-<tr><td colspan="3"><hr/></td></tr>
-<tr>
-	<td><div>{SEARCH_FORM}{SEARCH_INPUT}{SEARCH_SUBMIT}{/SEARCH_FORM}</div></td>
-	<td>Powered by <a href="http://lionwiki.0o.cz/">LionWiki</a>. {LAST_CHANGED_TEXT}: {LAST_CHANGED} {COOKIE}</td>
-	<td style="text-align:right">{EDIT} {SYNTAX} {HISTORY}</td>
-</tr>
-</table>
-</body>
-</html>'; }
+<div id="wrapper">
+	<div id="header">
+		<div align="right">{HOME} {&nbsp;&nbsp; RECENT_CHANGES}</div>
+	</div>
+	<div id="content">
+		<h1 id="page-title">{PAGE_TITLE} {<span class="pageVersionsList">( plugin:VERSIONS_LIST )</span>}</h1>
+		{<div class="error"> ERROR </div>}
+		{CONTENT}
+		{plugin:TAG_LIST}
+		{CONTENT_FORM}
+		<table style="width: 100%;">
+			<tr>
+				<td>{RENAME_TEXT }{RENAME_INPUT }{plugin:TOOLBAR_TEXTAREA}</td>
+				<td colspan="2" style="text-align: right;" nowrap="nowrap">{SHOW_PAGE  &nbsp; }{SYNTAX}</td>
+			</tr>
+			<tr>
+				<td colspan="3">{CONTENT_TEXTAREA}</td>
+			</tr>
+			<tr>
+				<td colspan="3">{FORM_PASSWORD}{  FORM_PASSWORD_INPUT}{  plugin:CAPTCHA_QUESTION}{  plugin:CAPTCHA_INPUT}{  EDIT_SUMMARY_TEXT}{  EDIT_SUMMARY_INPUT}{  CONTENT_SUBMIT}{  CONTENT_PREVIEW}</td>
+			</tr>
+		</table>
+		{/CONTENT_FORM}
+
+		{plugin:COMMENTS}
+	</div>
+	<div id="footer">
+		<div style="float:left;">
+		{SEARCH_FORM}{SEARCH_INPUT}{SEARCH_SUBMIT}{/SEARCH_FORM} Powered by <a href="http://lionwiki.0o.cz/">LionWiki</a>
+		</div>
+		<div style="float:right;padding:7px;">{EDIT} {&nbsp;&nbsp; HISTORY}</div>
+	</div>
+</div>
+</body>'; }
