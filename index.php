@@ -12,7 +12,7 @@ foreach($_REQUEST as $k => $v)
 
 // =======================
 // SETTINGS / CONFIG - default settings, can be overridden in config.php
-$WIKI_TITLE = 'My new wiki'; // name of the site
+$WIKI_TITLE = 'My wiki'; // name of the site
 $PASSWORD = ''; // SHA1 hash
 
 $TEMPLATE = 'templates/dandelion.html'; // presentation template (optional)
@@ -46,7 +46,7 @@ $PLUGINS_DATA_DIR = $VAR_DIR.'plugins/';
 $LANG_DIR = 'lang/';
 
 // default translation
-$T_HOME = 'Main page';
+$T_HOME = 'Main';
 $T_SYNTAX = 'Syntax';
 $T_DONE = 'Save changes';
 $T_DISCARD_CHANGES = 'Discard changes';
@@ -54,7 +54,7 @@ $T_PREVIEW = 'Preview';
 $T_SEARCH = 'Search';
 $T_SEARCH_RESULTS = 'Search results';
 $T_LIST_OF_ALL_PAGES = 'List of all pages';
-$T_RECENT_CHANGES = 'Recent changes';
+$T_RECENT_CHANGES = 'Recently';
 $T_LAST_CHANGED = 'Last changed';
 $T_HISTORY = 'History';
 $T_RESTORE = 'Restore';
@@ -67,7 +67,7 @@ $T_EDIT_CONFLICT = 'Edit conflict: somebody saved this page after you started ed
 $T_SHOW_SOURCE = 'Show source';
 $T_SHOW_PAGE = 'Show page';
 $T_ERASE_COOKIE = 'Erase cookies';
-$T_MOVE_TEXT = 'New name';
+$T_MOVE_TEXT = 'Title';
 $T_DIFF = 'diff';
 $T_CREATE_PAGE = 'Create page';
 $T_PROTECTED_READ = 'You need to enter password to view content of site: ';
@@ -215,6 +215,7 @@ if($action == 'save' && !$preview && authentified()) { // do we have page to sav
 				die('Unknown error2! Page was not moved.');
 			} else
 				$page = $moveto;
+		
 
 		if(!plugin('pageWritten'))
 			die(header("Location:$self?page=" . u($page) . '&redirect=no' . ($par ? "&par=$par" : '') . ($_REQUEST['ajax'] ? '&ajax=1' : '')));
@@ -228,10 +229,10 @@ if($action == 'save' && !$preview && authentified()) { // do we have page to sav
 }
 
 
-if($action == 'edit' || $preview) { // Page editing
+if( !$action || $action == 'edit' || $preview) { // Page editing
 	$CON_FORM_BEGIN = "<form action=\"$self\" method=\"post\"><input type=\"hidden\" name=\"action\" value=\"save\"/><input type=\"hidden\" name=\"last_changed\" value=\"$last_changed_ts\"/><input type=\"hidden\" name=\"showsource\" value=\"$showsource\"/><input type=\"hidden\" name=\"par\" value=\"".h($par)."\"/><input type=\"hidden\" name=\"page\" value=\"".h($page)."\"/>";
 	$CON_FORM_END = '</form>';
-	$CON_TEXTAREA = '<textarea class="contentTextarea" name="content" style="width:100%" cols="100" rows="30">'.h(str_replace("&lt;", "<", $CON)).'</textarea>';
+	$CON_TEXTAREA = '<textarea class="contentTextarea" name="content" style="width:100%" cols="50" rows="15">'.h(str_replace("&lt;", "<", $CON)).'</textarea>';
 	$CON_PREVIEW = '<input class="submit" type="submit" name="preview" value="'.$T_PREVIEW.'"/>';
 
 	if(!$showsource) {
@@ -325,7 +326,7 @@ if($action == 'edit' || $preview) { // Page editing
 	plugin('action', $action);
 
 	
-if(!$action || $preview) { // page parsing
+if( !$action || $preview ) { // page parsing for view or preview
 	if(preg_match("/(?<!\^)\{title:([^}\n]*)\}/U", $CON, $m)) { // Change page title
 		$TITLE = $m[1];
 		$CON = str_replace($m[0], "", $CON);
@@ -494,7 +495,7 @@ $tpl_subs = array(
 	'HEAD' => $HEAD . ($action ? '<meta name="robots" content="noindex, nofollow"/>' : ''),
 	'SEARCH_FORM' => '<form action="'.$self.'" method="get"><span><input type="hidden" name="action" value="search"/><input type="submit" style="display:none;"/>',
 	'\/SEARCH_FORM' => "</span></form>",
-	'SEARCH_INPUT' => '<input type="text" name="query" value="'.h($query).'"/>',
+	'SEARCH_INPUT' => '<input type="text" id="searchinput" name="query" value="'.h($query).'"/>',
 	'SEARCH_SUBMIT' => "<input class=\"submit\" type=\"submit\" value=\"$T_SEARCH\"/>",
 	'HOME' => "<a href=\"$self?page=".u($START_PAGE)."\">$T_HOME</a>",
 	'RECENT_CHANGES' => "<a href=\"$self?action=recent\">$T_RECENT_CHANGES</a>",
@@ -529,7 +530,18 @@ foreach($tpl_subs as $tpl => $rpl) // substituting values
 	$html = template_replace($tpl, $rpl, $html);
 
 header('Content-type: text/html; charset=UTF-8');
+
+
+if( !$action ) { // if page gets viewed we will sometimes cache it -mt
+		//export to html file
+		// html var to file 
+		$writehtmlcontent = fopen("$PG_DIR$page.html", 'w') or die("can't open file"); 
+		fwrite($writehtmlcontent, $html);
+		fclose($writehtmlcontent);}
+
 die($html);
+
+
 
 // Function library
 
@@ -664,76 +676,53 @@ function fallback_template() { return '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 
 	template under the terms of GNU GPL. http://dandelion.sheep.art.pl/ -->
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 	<title>{PAGE_TITLE_HEAD  - }{WIKI_TITLE}</title>
-	<style type="text/css">
-html{font:200% sans-serif;background:#f7f7f7;line-height:1.4}
-body{color:#333}
-#wrapper{margin:auto;width:100%;position:relative}
-#header{padding:0px 0px 7px 0px}
-#content{background:white;padding:1em;border:1px solid #e0d78a;outline:0.5em solid #fef4a4;margin:0.5em 0;padding:20px;min-height:20em}
-#content *{outline: 0}
-h1{margin-top:0px;}
-h1,h2,h3,h4,h5,h6{letter-spacing:0.05em;color:#1474CA;font-weight:normal}
-h2 span.par-edit,h3 span.par-edit,h4 span.par-edit,h5 span.par-edit,h6 span.par-edit{display:none}
-h2:hover span.par-edit,h3:hover span.par-edit,h4:hover span.par-edit,h5:hover span.par-edit,h6:hover span.par-edit{display:inline;font-size:x-small}
-a{color:#1474CA;text-decoration:none}
-a:visited{color:#1474CA}
-a.pending{color:#c174a0}
-a:hover{text-decoration:underline}
-a img{border:none}
-a.external:after{content: "\2197";}
-input,textarea{font-size:94%;border:1px solid #999;background:#fff;color:#666;outline:0.2em solid #eee;padding:0px;line-height:1.2;margin:0.5em;vertical-align:middle}
-textarea{display:block;margin:0.5em auto;width:100%}
-pre{padding:0.5em;margin:0.5em;border:1px solid #e0d78a;background:#fef4a4;color:#644e22;overflow:auto;outline:0.4em solid #eee !important;}
-img{border:1px solid #ccc;outline:0.25em solid #eee;padding:0.25em;margin:0.25em 0 0.25em 0.5em;background:#fff}
-hr{height:0;border:none;color:#fff;background:transparent;border-bottom:1px solid #ccc; margin:0.5em 0}
-#diff{outline:none;border:none;background:#fff;line-height:1.25;padding:1em;white-space:pre-wrap;word-wrap:break-word;white-space:-moz-pre-wrap;white-space:-pre-wrap;white-space:-o-pre-wrap;width:97%}
-#diff ins{color:green;text-decoration:none;font-weight:bold}
-#diff del{color:red;text-decoration:line-through}
-hr{margin:10px 0 10px 0;height:0px;overflow:hidden;border:0px;border-top:2px solid #1474CA}
-.error{color:#F25A5A;font-weight:bold}
-form{display:inline}
-#contentTextarea{height:44em}
-#toc{margin:5px 0 5px 10px;padding:6px 5px 7px 0px;float:right;list-style:none;outline:0.4em solid #eee;background:#fef4a4;border:1px solid #e0d78a}
-#toc ul{list-style:none;padding:3px 0 3px 10px}
-#toc li{font-size:11px;padding-left:10px}
-.rc-diff, .rc-date, .rc-ip, .rc-size {font-size: smaller}
-/* Following are plugin specific styles */
-.pageVersionsList{letter-spacing:0px;font-variant:normal;font-size:12px}
-#renameForm{float:left}
-.clear{clear:both}
-.tagList{padding:0.2em 0.4em 0.2em 0.4em;margin-top:0.5em;border:1px dashed #e0d78a;background:#fef4a4;color:#644e22}
-.tagCloud{padding:0.4em 0.6em 0.4em 0.6em;float:right;width:200px;margin:1em;border:1px dashed #e0d78a;background:#fef4a4;color:#644e22}
-#fileTable{border-collapse:collapse}
-#fileTable td{border:1px solid #FEF4A4;padding:2px 6px 2px 6px}
-.comment-item{border:1px solid #999;color:#666;outline:0.2em solid #eee}
-.resizeTextareaDiv{margin-top: 5px}
-a.toolbarTextareaItem{padding-right: 10px}
-.wikitable{border-collapse:collapse}
-.wikitable td{border: 1px solid #DDDDDD;padding:1px 5px 1px 5px}
-	</style>
+	<link  href="http://m4q.ezyro.com/leowiki/templates/dandelion.css" media="all" rel="stylesheet" />
+	<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+	<!-- for Chrome on Android and Apple, multi-res icon of 196x196 -->
+	<meta name="mobile-web-app-capable" content="yes">
+	<link rel="shortcut icon" sizes="196x196" href="appico2.png">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-barstyle" content="black-translucent">
+	<link rel="apple-touch-icon" href="appico2.png">
   {HEAD}
 </head>
-<body>
+<body><!--
+<header>
+<nav>
+<a href="#" id="menu-icon"></a>
+<ul>
+<li><a href="#" class="current">Home</a></li>
+<li><a href="#">About</a></li>
+<li><a href="#">Work</a></li>
+<li><a href="#">Blog</a></li>
+<li><a href="#">Contact</a></li>
+</ul>
+</nav>
+</header> -->
 <div id="wrapper">
 	<div id="header">
-		<div align="right">{HOME} {&nbsp;&nbsp; RECENT_CHANGES}</div>
+		<h1 id="page-title" align="left">{PAGE_TITLE} {<span class="pageVersionsList">( plugin:VERSIONS_LIST )</span>}</h1>
+		<div id="toprightmenu" align="right"> {SEARCH_FORM}{SEARCH_INPUT}{SEARCH_SUBMIT}{/SEARCH_FORM}  {HOME} -  <a href="#quickedit">edit</a> - <a href="#footer">down</a></div>
 	</div>
 	<div id="content">
-		<h1 id="page-title">{PAGE_TITLE} {<span class="pageVersionsList">( plugin:VERSIONS_LIST )</span>}</h1>
 		{<div class="error"> ERROR </div>}
 		{CONTENT}
 		{plugin:TAG_LIST}
+	</div>
+	<div id="quickedit">
 		{CONTENT_FORM}
 		<table style="width: 100%;">
 			<tr>
-				<td>{RENAME_TEXT }{RENAME_INPUT }{plugin:TOOLBAR_TEXTAREA}</td>
+			<!-- {RENAME_TEXT }{RENAME_INPUT } -->
+				<td>Editor: {plugin:TOOLBAR_TEXTAREA}</td>
 				<td colspan="2" style="text-align: right;" nowrap="nowrap">{SHOW_PAGE  &nbsp; }{SYNTAX}</td>
 			</tr>
 			<tr>
 				<td colspan="3">{CONTENT_TEXTAREA}</td>
 			</tr>
 			<tr>
-				<td colspan="3">{FORM_PASSWORD}{  FORM_PASSWORD_INPUT}{  plugin:CAPTCHA_QUESTION}{  plugin:CAPTCHA_INPUT}{  EDIT_SUMMARY_TEXT}{  EDIT_SUMMARY_INPUT}{  CONTENT_SUBMIT}{  CONTENT_PREVIEW}</td>
+			<!--{  EDIT_SUMMARY_TEXT}{  EDIT_SUMMARY_INPUT} -->
+				<td colspan="3">{FORM_PASSWORD}{  FORM_PASSWORD_INPUT}{  plugin:CAPTCHA_QUESTION}{  plugin:CAPTCHA_INPUT}{  CONTENT_SUBMIT}{  CONTENT_PREVIEW}</td>
 			</tr>
 		</table>
 		{/CONTENT_FORM}
@@ -742,9 +731,10 @@ a.toolbarTextareaItem{padding-right: 10px}
 	</div>
 	<div id="footer">
 		<div style="float:left;">
-		{SEARCH_FORM}{SEARCH_INPUT}{SEARCH_SUBMIT}{/SEARCH_FORM} Powered by <a href="http://lionwiki.0o.cz/">LionWiki</a>
+		{SEARCH_FORM}{SEARCH_INPUT}{SEARCH_SUBMIT}{/SEARCH_FORM} 
+		<!-- <a href="http://lionwiki.0o.cz/">LionWiki</a> -->
 		</div>
-		<div style="float:right;padding:7px;">{EDIT} {&nbsp;&nbsp; HISTORY}</div>
+		<div id="bottomrightmenu" style="float:right;padding:7px;">{EDIT} - {&nbsp;&nbsp; HISTORY} - {&nbsp;&nbsp; RECENT_CHANGES} - <a href="#wrapper">top</a></div>
 	</div>
 </div>
 </body>'; }
